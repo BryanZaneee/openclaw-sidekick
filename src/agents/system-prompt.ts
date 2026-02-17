@@ -32,6 +32,7 @@ function buildSkillsSection(params: {
     "- If multiple could apply: choose the most specific one, then read/follow it.",
     "- If none clearly apply: do not read any SKILL.md.",
     "Constraints: never read more than one skill up front; only read after selecting.",
+    "- Pay attention to 'Use when' / 'Don't use when' hints in skill descriptions for routing decisions.",
     trimmed,
     "",
   ];

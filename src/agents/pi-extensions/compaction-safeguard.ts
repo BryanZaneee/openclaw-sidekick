@@ -158,6 +158,33 @@ function formatFileOperations(readFiles: string[], modifiedFiles: string[]): str
   return `\n\n${sections.join("\n\n")}`;
 }
 
+export function buildStructuredCompactionInstructions(baseInstructions?: string): string {
+  const sections = [
+    "Structure the summary with these sections:",
+    "",
+    "## Active Goals",
+    "What the user is currently trying to accomplish.",
+    "",
+    "## Progress & Decisions",
+    "Key steps completed and important decisions made.",
+    "",
+    "## Unresolved Items",
+    "Open questions, pending tasks, or items needing follow-up.",
+    "",
+    "## Error Patterns",
+    "Recurring errors or issues encountered and their resolution status.",
+    "",
+    "## Key Context",
+    "Important context, constraints, or preferences that should persist.",
+  ];
+
+  if (baseInstructions && baseInstructions.trim()) {
+    sections.push("", "Additional instructions:", baseInstructions.trim());
+  }
+
+  return sections.join("\n");
+}
+
 export default function compactionSafeguardExtension(api: ExtensionAPI): void {
   api.on("session_before_compact", async (event, ctx) => {
     const { preparation, customInstructions, signal } = event;
@@ -286,7 +313,7 @@ export default function compactionSafeguardExtension(api: ExtensionAPI): void {
         reserveTokens,
         maxChunkTokens,
         contextWindow: contextWindowTokens,
-        customInstructions,
+        customInstructions: buildStructuredCompactionInstructions(customInstructions),
         previousSummary: effectivePreviousSummary,
       });
 
@@ -338,6 +365,7 @@ export default function compactionSafeguardExtension(api: ExtensionAPI): void {
 export const __testing = {
   collectToolFailures,
   formatToolFailuresSection,
+  buildStructuredCompactionInstructions,
   computeAdaptiveChunkRatio,
   isOversizedForSummary,
   BASE_CHUNK_RATIO,

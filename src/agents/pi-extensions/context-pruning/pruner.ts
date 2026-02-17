@@ -217,7 +217,7 @@ ${tail}`;
 
   const note = `
 
-[Tool result trimmed: kept first ${headChars} chars and last ${tailChars} chars of ${rawLen} chars.]`;
+[${msg.toolName} result trimmed: kept first ${headChars} chars and last ${tailChars} chars of ${rawLen} chars.]`;
 
   return { ...msg, content: [asText(trimmed + note)] };
 }
@@ -331,7 +331,7 @@ export function pruneContextMessages(params: {
     const beforeChars = estimateMessageChars(msg);
     const cleared: ToolResultMessage = {
       ...msg,
-      content: [asText(settings.hardClear.placeholder)],
+      content: [asText(`[${msg.toolName}: ${settings.hardClear.placeholder}]`)],
     };
     if (!next) {
       next = messages.slice();

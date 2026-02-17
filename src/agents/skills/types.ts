@@ -32,6 +32,11 @@ export type OpenClawSkillMetadata = {
   install?: SkillInstallSpec[];
 };
 
+export type SkillRoutingMetadata = {
+  useWhen?: string[];
+  dontUseWhen?: string[];
+};
+
 export type SkillInvocationPolicy = {
   userInvocable: boolean;
   disableModelInvocation: boolean;
@@ -68,6 +73,7 @@ export type SkillEntry = {
   frontmatter: ParsedSkillFrontmatter;
   metadata?: OpenClawSkillMetadata;
   invocation?: SkillInvocationPolicy;
+  routing?: SkillRoutingMetadata;
 };
 
 export type SkillEligibilityContext = {

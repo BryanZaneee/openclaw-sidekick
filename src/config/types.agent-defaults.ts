@@ -254,6 +254,8 @@ export type AgentCompactionConfig = {
   maxHistoryShare?: number;
   /** Pre-compaction memory flush (agentic turn). Default: enabled. */
   memoryFlush?: AgentCompactionMemoryFlushConfig;
+  /** Trigger proactive compaction when context utilization exceeds this ratio (0.5-0.95). Set to 0 to disable. Default: 0.75. */
+  proactiveThreshold?: number;
 };
 
 export type AgentCompactionMemoryFlushConfig = {

@@ -60,7 +60,8 @@ export const DEFAULT_CONTEXT_PRUNING_SETTINGS: EffectiveContextPruningSettings =
   },
   hardClear: {
     enabled: true,
-    placeholder: "[Old tool result content cleared]",
+    placeholder:
+      "[Tool result cleared. Use memory_search to recall earlier findings or re-run the tool.]",
   },
 };
 

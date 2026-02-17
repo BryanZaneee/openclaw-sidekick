@@ -135,7 +135,7 @@ describe("context-pruning", () => {
     expect(toolText(findToolResult(next, "t2"))).toContain("y".repeat(20_000));
     expect(toolText(findToolResult(next, "t3"))).toContain("z".repeat(20_000));
     expect(toolText(findToolResult(next, "t4"))).toContain("w".repeat(20_000));
-    expect(toolText(findToolResult(next, "t1"))).toBe("[cleared]");
+    expect(toolText(findToolResult(next, "t1"))).toBe("[exec: [cleared]]");
   });
 
   it("never prunes tool results before the first user message", () => {
@@ -174,7 +174,7 @@ describe("context-pruning", () => {
     });
 
     expect(toolText(findToolResult(next, "t0"))).toBe("x".repeat(20_000));
-    expect(toolText(findToolResult(next, "t1"))).toBe("[cleared]");
+    expect(toolText(findToolResult(next, "t1"))).toBe("[exec: [cleared]]");
   });
 
   it("hard-clear removes eligible tool results before cutoff", () => {
@@ -214,8 +214,8 @@ describe("context-pruning", () => {
     } as unknown as ExtensionContext;
     const next = pruneContextMessages({ messages, settings, ctx });
 
-    expect(toolText(findToolResult(next, "t1"))).toBe("[cleared]");
-    expect(toolText(findToolResult(next, "t2"))).toBe("[cleared]");
+    expect(toolText(findToolResult(next, "t1"))).toBe("[exec: [cleared]]");
+    expect(toolText(findToolResult(next, "t2"))).toBe("[exec: [cleared]]");
     // Tool results after the last assistant are protected.
     expect(toolText(findToolResult(next, "t3"))).toContain("z".repeat(20_000));
   });
@@ -249,7 +249,7 @@ describe("context-pruning", () => {
       contextWindowTokensOverride: 1000,
     });
 
-    expect(toolText(findToolResult(next, "t1"))).toBe("[cleared]");
+    expect(toolText(findToolResult(next, "t1"))).toBe("[exec: [cleared]]");
   });
 
   it("reads per-session settings from registry", async () => {
@@ -311,7 +311,7 @@ describe("context-pruning", () => {
     if (!result) {
       throw new Error("expected handler to return messages");
     }
-    expect(toolText(findToolResult(result.messages, "t1"))).toBe("[cleared]");
+    expect(toolText(findToolResult(result.messages, "t1"))).toBe("[exec: [cleared]]");
   });
 
   it("cache-ttl prunes once and resets the ttl window", () => {
@@ -371,7 +371,7 @@ describe("context-pruning", () => {
     if (!first) {
       throw new Error("expected first prune");
     }
-    expect(toolText(findToolResult(first.messages, "t1"))).toBe("[cleared]");
+    expect(toolText(findToolResult(first.messages, "t1"))).toBe("[exec: [cleared]]");
 
     const runtime = getContextPruningRuntime(sessionManager);
     if (!runtime?.lastCacheTouchAt) {
@@ -488,7 +488,7 @@ describe("context-pruning", () => {
     const text = toolText(findToolResult(next, "t1"));
     expect(text).toContain("AAAAA\nB");
     expect(text).toContain("BBB");
-    expect(text).toContain("[Tool result trimmed:");
+    expect(text).toContain("[exec result trimmed:");
   });
 
   it("soft-trims oversized tool results and preserves head/tail with a note", () => {
@@ -520,6 +520,6 @@ describe("context-pruning", () => {
     const text = toolText(tool);
     expect(text).toContain("abcdef");
     expect(text).toContain("efghij");
-    expect(text).toContain("[Tool result trimmed:");
+    expect(text).toContain("[exec result trimmed:");
   });
 });

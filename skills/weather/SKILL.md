@@ -1,6 +1,8 @@
 ---
 name: weather
 description: Get current weather and forecasts (no API key required).
+use-when: "user asks about weather forecasts or current conditions"
+dont-use-when: "user mentions weather metaphorically"
 homepage: https://wttr.in/:help
 metadata: { "openclaw": { "emoji": "🌤️", "requires": { "bins": ["curl"] } } }
 ---

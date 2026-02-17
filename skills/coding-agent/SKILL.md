@@ -1,6 +1,8 @@
 ---
 name: coding-agent
 description: Run Codex CLI, Claude Code, OpenCode, or Pi Coding Agent via background process for programmatic control.
+use-when: "user wants to run an external coding agent like Codex, Claude Code, or Pi"
+dont-use-when: "user wants you to write code directly"
 metadata:
   {
     "openclaw": { "emoji": "🧩", "requires": { "anyBins": ["claude", "codex", "opencode", "pi"] } },

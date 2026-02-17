@@ -102,6 +102,7 @@ export const AgentDefaultsSchema = z
           })
           .strict()
           .optional(),
+        proactiveThreshold: z.number().min(0).max(0.95).optional(),
       })
       .strict()
       .optional(),

@@ -50,6 +50,10 @@ import { compactEmbeddedPiSessionDirect } from "./compact.js";
 import { resolveGlobalLane, resolveSessionLane } from "./lanes.js";
 import { log } from "./logger.js";
 import { resolveModel } from "./model.js";
+import {
+  shouldRunProactiveCompaction,
+  resolveProactiveCompactionThreshold,
+} from "./proactive-compaction.js";
 import { runEmbeddedAttempt } from "./run/attempt.js";
 import { buildEmbeddedRunPayloads } from "./run/payloads.js";
 import {
@@ -388,10 +392,60 @@ export async function runEmbeddedPiAgent(
       let toolResultTruncationAttempted = false;
       const usageAccumulator = createUsageAccumulator();
       let autoCompactionCount = 0;
+      let proactiveCompactionDone = false;
       try {
         while (true) {
           attemptedThinking.add(thinkLevel);
           await fs.mkdir(resolvedWorkspace, { recursive: true });
+
+          // Proactive compaction: compact before attempting if context is near-full
+          if (!proactiveCompactionDone && overflowCompactionAttempts === 0) {
+            const threshold = resolveProactiveCompactionThreshold(params.config);
+            if (threshold > 0) {
+              try {
+                const shouldCompact = await shouldRunProactiveCompaction({
+                  sessionFile: params.sessionFile,
+                  contextWindowTokens: ctxInfo.tokens,
+                  threshold,
+                });
+                if (shouldCompact) {
+                  log.info(
+                    `[proactive-compaction] context exceeds ${(threshold * 100).toFixed(0)}% threshold; compacting`,
+                  );
+                  const compactResult = await compactEmbeddedPiSessionDirect({
+                    sessionId: params.sessionId,
+                    sessionKey: params.sessionKey,
+                    messageChannel: params.messageChannel,
+                    messageProvider: params.messageProvider,
+                    agentAccountId: params.agentAccountId,
+                    authProfileId: lastProfileId,
+                    sessionFile: params.sessionFile,
+                    workspaceDir: resolvedWorkspace,
+                    agentDir,
+                    config: params.config,
+                    skillsSnapshot: params.skillsSnapshot,
+                    senderIsOwner: params.senderIsOwner,
+                    provider,
+                    model: modelId,
+                    thinkLevel,
+                    reasoningLevel: params.reasoningLevel,
+                    bashElevated: params.bashElevated,
+                    extraSystemPrompt: params.extraSystemPrompt,
+                    ownerNumbers: params.ownerNumbers,
+                  });
+                  if (compactResult.compacted) {
+                    autoCompactionCount += 1;
+                    log.info(`[proactive-compaction] succeeded`);
+                  }
+                }
+              } catch (err) {
+                log.warn(
+                  `[proactive-compaction] check failed, skipping: ${describeUnknownError(err)}`,
+                );
+              }
+              proactiveCompactionDone = true;
+            }
+          }
 
           const prompt =
             provider === "anthropic" ? scrubAnthropicRefusalMagic(params.prompt) : params.prompt;

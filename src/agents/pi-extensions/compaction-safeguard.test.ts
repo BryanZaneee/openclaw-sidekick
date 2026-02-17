@@ -9,6 +9,7 @@ import { __testing } from "./compaction-safeguard.js";
 const {
   collectToolFailures,
   formatToolFailuresSection,
+  buildStructuredCompactionInstructions,
   computeAdaptiveChunkRatio,
   isOversizedForSummary,
   BASE_CHUNK_RATIO,
@@ -209,6 +210,49 @@ describe("isOversizedForSummary", () => {
     const isOversized = isOversizedForSummary(msg, CONTEXT_WINDOW);
     // Due to token estimation, this could be either true or false at the boundary
     expect(typeof isOversized).toBe("boolean");
+  });
+});
+
+describe("buildStructuredCompactionInstructions", () => {
+  const SECTION_HEADERS = [
+    "## Active Goals",
+    "## Progress & Decisions",
+    "## Unresolved Items",
+    "## Error Patterns",
+    "## Key Context",
+  ];
+
+  it("includes all section headers", () => {
+    const result = buildStructuredCompactionInstructions();
+    for (const header of SECTION_HEADERS) {
+      expect(result).toContain(header);
+    }
+  });
+
+  it("appends base instructions under 'Additional instructions:'", () => {
+    const result = buildStructuredCompactionInstructions("Keep answers short.");
+    expect(result).toContain("Additional instructions:");
+    expect(result).toContain("Keep answers short.");
+  });
+
+  it("omits 'Additional instructions:' when baseInstructions is undefined", () => {
+    const result = buildStructuredCompactionInstructions(undefined);
+    expect(result).not.toContain("Additional instructions:");
+  });
+
+  it("omits 'Additional instructions:' when baseInstructions is empty string", () => {
+    const result = buildStructuredCompactionInstructions("");
+    expect(result).not.toContain("Additional instructions:");
+  });
+
+  it("omits 'Additional instructions:' when baseInstructions is whitespace-only", () => {
+    const result = buildStructuredCompactionInstructions("   \n\t  ");
+    expect(result).not.toContain("Additional instructions:");
+  });
+
+  it("trims base instructions", () => {
+    const result = buildStructuredCompactionInstructions("  padded  ");
+    expect(result).toContain("Additional instructions:\npadded");
   });
 });
 

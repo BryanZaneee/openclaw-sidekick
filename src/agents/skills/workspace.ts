@@ -11,6 +11,7 @@ import type {
   SkillEligibilityContext,
   SkillCommandSpec,
   SkillEntry,
+  SkillRoutingMetadata,
   SkillSnapshot,
 } from "./types.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
@@ -21,6 +22,7 @@ import {
   parseFrontmatter,
   resolveOpenClawMetadata,
   resolveSkillInvocationPolicy,
+  resolveSkillRouting,
 } from "./frontmatter.js";
 import { resolvePluginSkillDirs } from "./plugin-skills.js";
 import { serializeByKey } from "./serialize.js";
@@ -183,9 +185,37 @@ function loadSkillEntries(
       frontmatter,
       metadata: resolveOpenClawMetadata(frontmatter),
       invocation: resolveSkillInvocationPolicy(frontmatter),
+      routing: resolveSkillRouting(frontmatter),
     };
   });
   return skillEntries;
+}
+
+export function buildEnrichedDescription(
+  desc: string | undefined,
+  routing: SkillRoutingMetadata,
+): string {
+  const lines: string[] = [];
+  if (desc) {
+    lines.push(desc);
+  }
+  if (routing.useWhen && routing.useWhen.length > 0) {
+    lines.push(`Use when: ${routing.useWhen.join("; ")}`);
+  }
+  if (routing.dontUseWhen && routing.dontUseWhen.length > 0) {
+    lines.push(`Don't use when: ${routing.dontUseWhen.join("; ")}`);
+  }
+  return lines.join("\n");
+}
+
+function enrichSkillsWithRouting(entries: SkillEntry[]): Skill[] {
+  return entries.map((entry) => {
+    if (!entry.routing) return entry.skill;
+    return {
+      ...entry.skill,
+      description: buildEnrichedDescription(entry.skill.description, entry.routing),
+    };
+  });
 }
 
 export function buildWorkspaceSkillSnapshot(
@@ -212,8 +242,9 @@ export function buildWorkspaceSkillSnapshot(
     (entry) => entry.invocation?.disableModelInvocation !== true,
   );
   const resolvedSkills = promptEntries.map((entry) => entry.skill);
+  const enrichedSkills = enrichSkillsWithRouting(promptEntries);
   const remoteNote = opts?.eligibility?.remote?.note?.trim();
-  const prompt = [remoteNote, formatSkillsForPrompt(resolvedSkills)].filter(Boolean).join("\n");
+  const prompt = [remoteNote, formatSkillsForPrompt(enrichedSkills)].filter(Boolean).join("\n");
   return {
     prompt,
     skills: eligible.map((entry) => ({
@@ -247,10 +278,9 @@ export function buildWorkspaceSkillsPrompt(
   const promptEntries = eligible.filter(
     (entry) => entry.invocation?.disableModelInvocation !== true,
   );
+  const enrichedSkills = enrichSkillsWithRouting(promptEntries);
   const remoteNote = opts?.eligibility?.remote?.note?.trim();
-  return [remoteNote, formatSkillsForPrompt(promptEntries.map((entry) => entry.skill))]
-    .filter(Boolean)
-    .join("\n");
+  return [remoteNote, formatSkillsForPrompt(enrichedSkills)].filter(Boolean).join("\n");
 }
 
 export function resolveSkillsPromptForRun(params: {

@@ -6,6 +6,7 @@ import type {
   SkillEntry,
   SkillInstallSpec,
   SkillInvocationPolicy,
+  SkillRoutingMetadata,
 } from "./types.js";
 import { LEGACY_MANIFEST_KEYS, MANIFEST_KEY } from "../../compat/legacy-names.js";
 import { parseFrontmatterBlock } from "../../markdown/frontmatter.js";
@@ -164,6 +165,35 @@ export function resolveSkillInvocationPolicy(
       getFrontmatterValue(frontmatter, "disable-model-invocation"),
       false,
     ),
+  };
+}
+
+function parseRoutingField(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return normalizeStringList(parsed);
+    }
+  } catch {
+    // not JSON, fall through
+  }
+  return normalizeStringList(value);
+}
+
+export function resolveSkillRouting(
+  frontmatter: ParsedSkillFrontmatter,
+): SkillRoutingMetadata | undefined {
+  const useWhen = parseRoutingField(getFrontmatterValue(frontmatter, "use-when"));
+  const dontUseWhen = parseRoutingField(getFrontmatterValue(frontmatter, "dont-use-when"));
+  if (useWhen.length === 0 && dontUseWhen.length === 0) {
+    return undefined;
+  }
+  return {
+    ...(useWhen.length > 0 ? { useWhen } : {}),
+    ...(dontUseWhen.length > 0 ? { dontUseWhen } : {}),
   };
 }
 
